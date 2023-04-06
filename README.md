@@ -17,7 +17,9 @@ Before running this project, you will need:
 
 git clone https://github.com/petrademia/ocr.git
 
-2.
+2. Fill the credential based on the value provided in your Google Cloud API Dashboard.
+
+3
 
 Run the project by building it via the gradle
 
