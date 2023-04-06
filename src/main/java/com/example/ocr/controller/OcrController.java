@@ -1,5 +1,6 @@
 package com.example.ocr.controller;
 
+import com.example.ocr.entity.TextInObjectResponse;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import net.sourceforge.tess4j.ITesseract;
@@ -39,6 +40,7 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class OcrController {
@@ -117,7 +119,8 @@ public class OcrController {
                 .execute();
         System.out.println("File ID: " + uploadedFile.getId());
 
-        ITesseract instance = new Tesseract();
+        ITesseract instanceInEn = new Tesseract();
+        ITesseract instanceInChi = new Tesseract();
         BufferedImage in = ImageIO.read(fileContent);
 
         BufferedImage newImage = new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -125,10 +128,35 @@ public class OcrController {
         g.drawImage(in, 0, 0, null);
         g.dispose();
 
-        instance.setDatapath("./tessdata/");
-        String result = instance.doOCR(newImage);
-        System.out.println(result);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        instanceInEn.setDatapath("./tessdata/");
+        instanceInEn.setLanguage("eng");
+
+        System.out.println("English sentence extracted:");
+        String resultEn = instanceInEn.doOCR(newImage);
+        System.out.println(resultEn);
+
+        String[] dataInEn = resultEn.split("\\s+");
+        List<String> wordWithOEn = Arrays.stream(dataInEn).filter(d -> d.contains("o") || d.contains("O")).collect(Collectors.toList());
+
+        for (String word : wordWithOEn) {
+            System.out.println((char)27 + "[34m" + word);
+        }
+
+        instanceInChi.setDatapath("./tessdata/");
+        instanceInChi.setLanguage("chi_sim");
+
+        System.out.println("Chinese sentence extracted:");
+        String resultChi = instanceInChi.doOCR(newImage);
+        System.out.println(resultChi);
+
+        String[] dataInChi = resultChi.split("\\s+");
+        List<String> wordWithChi = Arrays.stream(dataInChi).filter(d -> d.contains("o") || d.contains("O")).collect(Collectors.toList());
+
+        for (String word : wordWithChi) {
+            System.out.println((char)27 + "[34m" + word);
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     public static java.io.File convert(MultipartFile file) throws IOException {
